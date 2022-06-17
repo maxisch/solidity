@@ -179,8 +179,13 @@ void SourceReferenceFormatter::printSourceLocation(SourceReference const& _ref)
 void SourceReferenceFormatter::printExceptionInformation(SourceReferenceExtractor::Message const& _msg)
 {
 	// exception header line
-	optional<Error::Severity> severity = Error::severityFromString(_msg.severity);
-	errorColored(severity) << _msg.severity;
+	optional<Error::Severity> severity = _msg.severity;
+	solAssert(
+		severity == Error::Severity::Error ||
+		severity == Error::Severity::Info ||
+		severity == Error::Severity::Warning
+	);
+	errorColored(severity) << Error::formatErrorSeverity(_msg.severity);
 	if (m_withErrorIds && _msg.errorId.has_value())
 		errorColored(severity) << " (" << _msg.errorId.value().error << ")";
 	messageColored() << ": " << _msg.primary.message << '\n';
@@ -197,7 +202,7 @@ void SourceReferenceFormatter::printExceptionInformation(SourceReferenceExtracto
 	m_stream << '\n';
 }
 
-void SourceReferenceFormatter::printExceptionInformation(util::Exception const& _exception, std::string const& _severity)
+void SourceReferenceFormatter::printExceptionInformation(util::Exception const& _exception, Error::Severity _severity)
 {
 	printExceptionInformation(SourceReferenceExtractor::extract(m_charStreamProvider, _exception, _severity));
 }

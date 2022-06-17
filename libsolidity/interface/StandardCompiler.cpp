@@ -125,7 +125,7 @@ Json::Value formatErrorWithException(
 	// TODO: consider enabling color
 	string formattedMessage = SourceReferenceFormatter::formatExceptionInformation(
 		_exception,
-		_type,
+		_severity,
 		_charStreamProvider
 	);
 

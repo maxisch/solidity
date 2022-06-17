@@ -30,7 +30,7 @@ using namespace solidity::langutil;
 SourceReferenceExtractor::Message SourceReferenceExtractor::extract(
 	CharStreamProvider const& _charStreamProvider,
 	util::Exception const& _exception,
-	string _severity
+	Error::Severity _severity
 )
 {
 	SourceLocation const* location = boost::get_error_info<errinfo_sourceLocation>(_exception);
@@ -52,7 +52,7 @@ SourceReferenceExtractor::Message SourceReferenceExtractor::extract(
 	Error const& _error
 )
 {
-	string severity = Error::formatErrorSeverity(Error::errorSeverity(_error.type()));
+	Error::Severity severity = Error::errorSeverity(_error.type());
 	Message message = extract(_charStreamProvider, _error, severity);
 	message.errorId = _error.errorId();
 	return message;

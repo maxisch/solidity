@@ -31,6 +31,7 @@
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/preprocessor/facilities/overload.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 
 #include <string>
 #include <utility>
@@ -236,29 +237,26 @@ public:
 		return false;
 	}
 
-	static std::string formatErrorSeverity(Severity _severity)
-	{
-		if (_severity == Severity::Info)
-			return "Info";
-		if (_severity == Severity::Warning)
-			return "Warning";
-		solAssert(isError(_severity), "");
-		return "Error";
-	}
-
-	static std::string formatErrorSeverityLowercase(Severity _severity)
+	static std::string formatErrorSeverity(Error::Severity _severity)
 	{
 		switch (_severity)
 		{
 		case Severity::Info:
-			return "info";
+			return "Info";
 		case Severity::Warning:
-			return "warning";
+			return "Warning";
 		case Severity::Error:
-			solAssert(isError(_severity), "");
-			return "error";
+			solAssert(isError(_severity));
+			return "Error";
 		}
-		solAssert(false, "");
+		solAssert(false);
+	}
+
+	static std::string formatErrorSeverityLowercase(Error::Severity _severity)
+	{
+		std::string severityValue = formatErrorSeverity(_severity);
+		boost::algorithm::to_lower(severityValue);
+		return severityValue;
 	}
 
 	static std::optional<Severity> severityFromString(std::string _input);
