@@ -1224,6 +1224,9 @@ FixedPointType const* RationalNumberType::fixedPointType() const
 
 pair<RationalNumberType const*, RationalNumberType const*> RationalNumberType::mantissaExponent() const
 {
+	// TODO: Can the value even be negative here?
+	solAssert(m_value >= 0);
+
 	rational const maxUint = rational((bigint(1) << 256) - 1);
 	rational const minInt = -rational(bigint(1) << 255);
 
@@ -1243,7 +1246,7 @@ pair<RationalNumberType const*, RationalNumberType const*> RationalNumberType::m
 	}
 
 	return {
-		TypeProvider::rationalNumber(unsignedMantissa),
+		TypeProvider::rationalNumber(negative ? -unsignedMantissa : unsignedMantissa),
 		TypeProvider::rationalNumber(-exponent),
 	};
 }
