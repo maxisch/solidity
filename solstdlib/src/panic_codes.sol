@@ -1,0 +1,10 @@
+uint constant GENERIC = 0x00; // generic / unspecified error
+uint constant ASSERT = 0x01; // used by the assert() builtin
+uint constant UNDER_OVERFLOW = 0x11; // arithmetic underflow or overflow
+uint constant DIVISION_BY_ZERO = 0x12; // division or modulo by zero
+uint constant ENUM_CONVERSION_ERROR = 0x21; // enum conversion error
+uint constant STORAGE_ENCODING_ERROR = 0x22; // invalid encoding in storage
+uint constant EMPTY_ARRAY_POP = 0x31; // empty array pop
+uint constant ARRAY_OUT_OF_BOUNDS = 0x32; // array out of bounds access
+uint constant RESOURCE_ERROR = 0x41; // resource error (too large allocation or too large array)
+uint constant INVALID_INTERNAL_FUNCTION = 0x51; // calling invalid internal function
