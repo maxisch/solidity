@@ -105,11 +105,10 @@ inline vector<shared_ptr<MagicVariableDeclaration const>> constructMagicVariable
 		magicVarDecl("sha256", TypeProvider::function(strings{"bytes memory"}, strings{"bytes32"}, FunctionType::Kind::SHA256, StateMutability::Pure)),
 		magicVarDecl("sha3", TypeProvider::function(strings{"bytes memory"}, strings{"bytes32"}, FunctionType::Kind::KECCAK256, StateMutability::Pure)),
 	};
-	if (!_stdlib)
-	{
+	if (_stdlib)
+		return list;
+	else
 		return list + precompiles;
-	}
-	return list;
 }
 
 }
