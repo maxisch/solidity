@@ -43,6 +43,8 @@
 #include <ostream>
 #include <string>
 
+#include <fmt/format.h>
+
 using namespace std;
 using namespace std::string_literals;
 using namespace std::placeholders;
@@ -119,7 +121,7 @@ LanguageServer::LanguageServer(Transport& _transport):
 		{"cancelRequest", [](auto, auto) {/*nothing for now as we are synchronous */}},
 		{"exit", [this](auto, auto) { m_state = (m_state == State::ShutdownRequested ? State::ExitRequested : State::ExitWithoutShutdown); }},
 		{"initialize", bind(&LanguageServer::handleInitialize, this, _1, _2)},
-		{"initialized", [](auto, auto) {}},
+		{"initialized", bind(&LanguageServer::handleInitialized, this, _1, _2)},
 		{"$/setTrace", bind(&LanguageServer::setTrace, this, _2)},
 		{"shutdown", [this](auto, auto) { m_state = State::ShutdownRequested; }},
 		{"textDocument/definition", GotoDefinition(*this) },
@@ -148,6 +150,16 @@ Json::Value LanguageServer::toJson(SourceLocation const& _location)
 
 void LanguageServer::changeConfiguration(Json::Value const& _settings)
 {
+	try
+	{
+		if (_settings["analyze-all-files-in-project"])
+			m_analyzeAllFilesFromProject = _settings["analyze-all-files-in-project"].asBool();
+	}
+	catch (...)
+	{
+		throw RequestError{ErrorCode::InvalidParams};
+	}
+
 	m_settingsObject = _settings;
 }
 
@@ -172,11 +184,12 @@ void LanguageServer::compile()
 	swap(oldRepository, m_fileRepository);
 
 	// Load all solidity files from project.
-	for (auto const& projectFile: allSolidityFilesFromProject())
-		m_fileRepository.setSourceByUri(
-			projectFile.generic_string(),
-			util::readFileAsString(projectFile)
-		);
+	if (m_analyzeAllFilesFromProject)
+		for (auto const& projectFile: allSolidityFilesFromProject())
+			m_fileRepository.setSourceByUri(
+				m_fileRepository.sourceUnitNameToUri(projectFile.generic_string()),
+				util::readFileAsString(projectFile)
+			);
 
 	// Overwrite all files as opened by the client and might potentially have changes.
 	for (string const& fileName: m_openFiles)
@@ -267,6 +280,7 @@ bool LanguageServer::run()
 			{
 				string const methodName = (*jsonMessage)["method"].asString();
 				id = (*jsonMessage)["id"];
+				lspDebug(fmt::format("received method call: {}", methodName));
 
 				if (auto handler = util::valueOrDefault(m_handlers, methodName))
 					handler(id, (*jsonMessage)["params"]);
@@ -341,6 +355,13 @@ void LanguageServer::handleInitialize(MessageID _id, Json::Value const& _args)
 
 
 	m_client.reply(_id, move(replyArgs));
+}
+
+void LanguageServer::handleInitialized(MessageID, Json::Value const&)
+{
+	lspDebug(fmt::format("handle initialized notification: {}", m_analyzeAllFilesFromProject ? "analyze-all-files-in-project" : "analyze-files-on-demand"));
+	if (m_analyzeAllFilesFromProject)
+		compile();
 }
 
 void LanguageServer::semanticTokensFull(MessageID _id, Json::Value const& _args)

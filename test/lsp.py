@@ -16,6 +16,7 @@ from enum import Enum, auto
 from itertools import islice
 from pathlib import PurePath
 from typing import Any, List, Optional, Tuple, Union, NewType
+from pprint import pprint
 
 import colorama  # Enables the use of SGR & CUP terminal VT sequences on Windows.
 from deepdiff import DeepDiff
@@ -898,16 +899,27 @@ class SolidityLSPTestSuite: # {{{
 
         return min(max(self.test_counter.failed, self.assertion_counter.failed), 127)
 
-    def setup_lsp(self, lsp: JsonRpcProcess, expose_project_root=True):
+    def setup_lsp(
+        self,
+        lsp: JsonRpcProcess,
+        expose_project_root=True,
+        analyze_all_files_in_project=False,
+        project_root_suffix = None
+    ):
         """
         Prepares the solc LSP server by calling `initialize`,
         and `initialized` methods.
         """
+        rootUri = self.project_root_uri
+        if project_root_suffix is not None:
+            rootUri = rootUri + '/' + project_root_suffix
         params = {
             'processId': None,
-            'rootUri': self.project_root_uri,
+            'rootUri': rootUri,
             'trace': 'off',
-            'initializationOptions': {},
+            'initializationOptions': {
+                'analyze-all-files-in-project': analyze_all_files_in_project,
+            },
             'capabilities': {
                 'textDocument': {
                     'publishDiagnostics': {'relatedInformation': True}
@@ -1296,6 +1308,17 @@ class SolidityLSPTestSuite: # {{{
     # }}}
 
     # {{{ actual tests
+
+    def test_analyze_all_project_files(self, solc: JsonRpcProcess) -> None:
+        self.setup_lsp(
+            solc,
+            analyze_all_files_in_project=True,
+            project_root_suffix='analyze-full-project'
+        )
+        published_diagnostics = self.wait_for_diagnostics(solc)
+        pprint(published_diagnostics)
+        assert False
+        pass
 
     def test_publish_diagnostics_errors_multiline(self, solc: JsonRpcProcess) -> None:
         self.setup_lsp(solc)
